@@ -1,48 +1,28 @@
-import type { MetaFunction } from "@remix-run/node";
+import { type MetaFunction } from "@remix-run/node"
+import { json, Link, useLoaderData } from "@remix-run/react"
+import { api } from "convex/_generated/api"
+import { ConvexHttpClient } from "convex/browser"
+import "tldraw/tldraw.css"
 
 export const meta: MetaFunction = () => {
   return [
     { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
-};
+    { name: "description", content: "Welcome to Remix!" }
+  ]
+}
+
+const loader = async () => {
+  const convex = new ConvexHttpClient(process.env.CONVEX_URL!)
+  const tldraws = await convex.query(api.tldraw.get)
+  console.log(tldraws)
+  return json({ tldraws })
+}
 
 export default function Index() {
-  return (
-    <div className="font-sans p-4">
-      <h1 className="text-3xl">Welcome to Remix</h1>
-      <ul className="list-disc mt-4 pl-6 space-y-2">
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/quickstart"
-            rel="noreferrer"
-          >
-            5m Quick Start
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/tutorial"
-            rel="noreferrer"
-          >
-            30m Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/docs"
-            rel="noreferrer"
-          >
-            Remix Docs
-          </a>
-        </li>
-      </ul>
-    </div>
-  );
+  const { tldraws } = useLoaderData<typeof loader>()
+  return tldraws.map((draw) => (
+    <Link key={draw._id} to={`/draw/${draw._id}`}>
+      {draw.name}
+    </Link>
+  ))
 }

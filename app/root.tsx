@@ -1,13 +1,24 @@
 import {
+  json,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
-} from "@remix-run/react";
-import "./tailwind.css";
+  useLoaderData
+} from "@remix-run/react"
+import "./tailwind.css"
+import { useState } from "react"
+import { ConvexProvider, ConvexReactClient } from "convex/react"
+
+export async function loader() {
+  const CONVEX_URL = process.env.CONVEX_URL!
+  return json({ ENV: { CONVEX_URL } })
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { ENV } = useLoaderData<typeof loader>()
+  const [convex] = useState(() => new ConvexReactClient(ENV.CONVEX_URL))
   return (
     <html lang="en">
       <head>
@@ -17,14 +28,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <ConvexProvider client={convex}>{children}</ConvexProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
     </html>
-  );
+  )
 }
 
 export default function App() {
-  return <Outlet />;
+  return <Outlet />
 }
