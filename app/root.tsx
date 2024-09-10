@@ -1,15 +1,11 @@
 import {
-  json,
   Links,
   Meta,
   Outlet,
   Scripts,
-  ScrollRestoration,
-  useLoaderData
+  ScrollRestoration
 } from "@remix-run/react"
 import "./tailwind.css"
-import { useState } from "react"
-import { ConvexProvider, ConvexReactClient } from "convex/react"
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

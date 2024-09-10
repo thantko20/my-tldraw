@@ -1,16 +1,12 @@
 import {
-  ActionFunctionArgs,
   json,
   type LoaderFunctionArgs,
   type MetaFunction
-} from "@remix-run/node"
+} from "@remix-run/cloudflare"
 import { useFetcher, useLoaderData } from "@remix-run/react"
 import { useCallback, useEffect, useState } from "react"
 import { createTLStore, getSnapshot, loadSnapshot, Tldraw } from "tldraw"
 import "tldraw/tldraw.css"
-import { readFile, writeFile } from "fs/promises"
-import path from "node:path"
-import { z } from "zod"
 
 export const meta: MetaFunction = () => {
   return [
@@ -19,33 +15,29 @@ export const meta: MetaFunction = () => {
   ]
 }
 
-const schema = z.object({
-  id: z.string(),
-  snapshot: z.string()
-})
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const result = schema.safeParse(await request.json())
-  if (!result.success) {
-    return new Response(JSON.stringify(result.error), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-  }
-  await writeFile(
-    path.resolve(path.join("files", result.data.id)),
-    result.data.snapshot
-  )
+export const action = async () => {
+  // const result = schema.safeParse(await request.json())
+  // if (!result.success) {
+  //   return new Response(JSON.stringify(result.error), {
+  //     status: 400,
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     }
+  //   })
+  // }
+  // await writeFile(
+  //   path.resolve(path.join("files", result.data.id)),
+  //   result.data.snapshot
+  // )
   return json({ message: "Success" })
 }
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const id = params.id ?? ""
-  const fileContent = await readFile(path.resolve(path.join("files", id)))
+  // const fileContent = await readFile(path.resolve(path.join("files", id)))
 
-  return json({ snapshot: JSON.parse(fileContent.toString("utf-8")), id })
+  // return json({ snapshot: JSON.parse(fileContent.toString("utf-8")), id })
+  return json({ snapshot: {}, id })
 }
 
 export default function Draw() {
@@ -67,7 +59,7 @@ export default function Draw() {
     } catch (error) {
       console.log(error)
     }
-  }, [store])
+  }, [store, fetcher, id])
 
   useEffect(() => {
     const onCtlS = (e: KeyboardEvent) => {

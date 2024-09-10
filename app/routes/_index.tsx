@@ -1,9 +1,6 @@
-import { ActionFunctionArgs, type MetaFunction } from "@remix-run/node"
+import { type MetaFunction } from "@remix-run/cloudflare"
 import { Form, json, Link, useLoaderData } from "@remix-run/react"
 import "tldraw/tldraw.css"
-import { readdir, writeFile } from "fs/promises"
-import { z } from "zod"
-import path from "node:path"
 
 export const meta: MetaFunction = () => {
   return [
@@ -13,30 +10,20 @@ export const meta: MetaFunction = () => {
 }
 
 export const loader = async () => {
-  const files = await readdir(path.resolve(path.join("files")))
-  return json({ files })
+  return json({ files: ["testing"] })
 }
 
-const schema = z.object({
-  name: z.string()
-})
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData()
-  const result = schema.safeParse(Object.fromEntries(formData))
-  if (!result.success) {
-    return new Response(JSON.stringify(result.error), {
-      status: 400,
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-  }
-
-  await writeFile(
-    path.resolve(path.join("files", result.data.name + ".json")),
-    "{}"
-  )
+export const action = async () => {
+  // const formData = await request.formData()
+  // const result = schema.safeParse(Object.fromEntries(formData))
+  // if (!result.success) {
+  //   return new Response(JSON.stringify(result.error), {
+  //     status: 400,
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     }
+  //   })
+  // }
   return json({ message: "success" })
 }
 
