@@ -1,50 +1,41 @@
-import { type MetaFunction } from "@remix-run/cloudflare"
-import { Form, json, Link, useLoaderData } from "@remix-run/react"
-import "tldraw/tldraw.css"
+import type { MetaFunction } from "@remix-run/cloudflare"
 
 export const meta: MetaFunction = () => {
   return [
     { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" }
+    {
+      name: "description",
+      content: "Welcome to Remix on Cloudflare!"
+    }
   ]
 }
 
-export const loader = async () => {
-  return json({ files: ["testing"] })
-}
-
-export const action = async () => {
-  // const formData = await request.formData()
-  // const result = schema.safeParse(Object.fromEntries(formData))
-  // if (!result.success) {
-  //   return new Response(JSON.stringify(result.error), {
-  //     status: 400,
-  //     headers: {
-  //       "Content-Type": "application/json"
-  //     }
-  //   })
-  // }
-  return json({ message: "success" })
-}
-
 export default function Index() {
-  const { files } = useLoaderData<typeof loader>()
   return (
-    <div>
-      <Form method="post">
-        <input name="name" type="text" placeholder="Enter name" />
-      </Form>
-      <div className="flex flex-col gap-2">
-        {files.map((file) => (
-          <Link
-            key={file}
-            to={`/draw/${file}`}
-            className="text-blue-700 hover:underline w-min"
+    <div className="font-sans p-4">
+      <h1 className="text-3xl">Welcome to Remix on Cloudflare</h1>
+      <ul className="list-disc mt-4 pl-6 space-y-2">
+        <li>
+          <a
+            className="text-blue-700 underline visited:text-purple-900"
+            target="_blank"
+            href="https://remix.run/docs"
+            rel="noreferrer"
           >
-            {file}
-          </Link>
-        ))}
-      </div>
+            Remix Docs
+          </a>
+        </li>
+        <li>
+          <a
+            className="text-blue-700 underline visited:text-purple-900"
+            target="_blank"
+            href="https://developers.cloudflare.com/pages/framework-guides/deploy-a-remix-site/"
+            rel="noreferrer"
+          >
+            Cloudflare Pages Docs - Remix guide
+          </a>
+        </li>
+      </ul>
     </div>
   )
 }
