@@ -4,16 +4,18 @@ import type {
   MetaFunction
 } from "@remix-run/cloudflare"
 import {
+  Form,
   json,
   Link,
   redirect,
-  useFetcher,
-  useLoaderData
+  useLoaderData,
+  useNavigation
 } from "@remix-run/react"
+import clsx from "clsx"
 import { nanoid } from "nanoid"
 import slugify from "slugify"
 import { z } from "zod"
-import { fileListSchema } from "~/schema"
+import { fileItemSchema, fileListSchema } from "~/schema"
 
 export const meta: MetaFunction = () => {
   return [
@@ -25,9 +27,17 @@ export const meta: MetaFunction = () => {
   ]
 }
 
-const schema = z.object({
-  name: z.string()
+const createSchema = z.object({
+  name: z.string(),
+  _action: z.literal("create")
 })
+
+const deleteSchema = z.object({
+  id: z.string(),
+  _action: z.literal("delete")
+})
+
+const schema = z.union([createSchema, deleteSchema])
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const formData = await request.formData()
@@ -38,27 +48,47 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       400
     )
   }
+
   const env = context.cloudflare.env
 
-  const id = nanoid()
-  const slug = slugify(result.data.name)
-  const filename = slug + ".json"
-  const folder = "content"
-  const objectKey = `/${folder}/${filename}`
+  if (result.data._action === "create") {
+    const data = result.data
+    const id = nanoid()
+    const slug = slugify(data.name)
+    const filename = slug + ".json"
+    const folder = "content"
+    const objectKey = `/${folder}/${filename}`
 
-  // create a new file in r2
-  const object = await env.CONTENT_BUCKET.put(objectKey, "")
-  if (!object) {
-    return json({ error: "failed to create file", status: "error" }, 500)
+    // create a new file in r2
+    const object = await env.CONTENT_BUCKET.put(objectKey, "")
+    if (!object) {
+      return json({ error: "failed to create file", status: "error" }, 500)
+    }
+
+    // store the file info in d1 db
+    const stmt = env.DB.prepare(
+      "insert into files (id, name, key, filename, slug) values (?1, ?2, ?3, ?4, ?5)"
+    ).bind(id, data.name, objectKey, filename, slug)
+    await stmt.run()
+
+    return redirect(`/${id}`)
   }
 
-  // store the file info in d1 db
-  const stmt = env.DB.prepare(
-    "insert into files (id, name, key, filename, slug) values (?1, ?2, ?3, ?4, ?5)"
-  ).bind(id, result.data.name, objectKey, filename, slug)
-  await stmt.run()
+  if (result.data._action === "delete") {
+    const record = await env.DB.prepare("select * from files where id = ?1")
+      .bind(result.data.id)
+      .first()
+    if (record) {
+      const file = fileItemSchema.parse(record)
+      await env.DB.prepare("delete from files where id = ?1")
+        .bind(file.id)
+        .run()
+      await env.CONTENT_BUCKET.delete(file.key)
+    }
+    return redirect("/")
+  }
 
-  return redirect(`/${id}`)
+  return null
 }
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
@@ -74,37 +104,60 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
 
 export default function Index() {
   const { data } = useLoaderData<typeof loader>()
-  const fetcher = useFetcher()
-  const busy = fetcher.state === "submitting"
+  const navigation = useNavigation()
+  const busyCreating =
+    navigation.formAction === "/?index" &&
+    navigation.formData?.get("_action") === "create"
 
   return (
     <div className="font-sans p-4">
       <div className="max-w-lg mx-auto">
-        <fetcher.Form method="post" className="flex flex-col gap-2">
+        <Form method="post" className="flex flex-col gap-2">
           <input
             name="name"
             type="text"
             placeholder="Enter name"
-            className="border-2 border-gray-400 px-1 py-1 rounded-sm focus:border-blue-600 outline-none disabled:bg-blue-500"
+            className="border-2 border-gray-300 px-1 py-1 rounded focus:border-blue-600 outline-none"
             required
+            disabled={busyCreating}
           />
           <button
-            className="bg-blue-600 text-gray-100 px-2 py-1 rounded"
+            className="bg-blue-600 text-gray-100 px-2 py-1 rounded disabled:bg-blue-400"
             type="submit"
-            disabled={busy}
+            disabled={busyCreating}
+            name="_action"
+            value="create"
           >
-            {busy ? "Submitting..." : "Submit"}
+            {busyCreating ? "Creating..." : "Create"}
           </button>
-        </fetcher.Form>
+        </Form>
         <div className="mt-4 flex flex-col gap-2">
           {data.map((item) => (
-            <Link
-              key={item.id}
-              to={`/${item.id}`}
-              className="text-blue-600 hover:underline inline-block w-max"
-            >
-              {item.name}
-            </Link>
+            <div key={item.id} className="flex justify-between items-center">
+              <Link
+                to={`/${item.id}`}
+                className="text-blue-600 hover:underline inline-block w-max"
+              >
+                {item.name}
+              </Link>
+              <Form method="post">
+                <input type="hidden" name="id" value={item.id} />
+                <button
+                  name="_action"
+                  value="delete"
+                  className={clsx(
+                    "text-red-400 underline text-sm hover:text-red-500 disabled:text-gray-400"
+                  )}
+                  disabled={
+                    navigation.formAction === "/?index" &&
+                    navigation.formData?.get("_action") === "delete" &&
+                    navigation.formData?.get("id") === item.id
+                  }
+                >
+                  Delete
+                </button>
+              </Form>
+            </div>
           ))}
         </div>
       </div>
