@@ -78,7 +78,7 @@ export default function TldrawPage() {
         const snapshot = getSnapshot(store)
         fetcher.submit(
           { snapshot: JSON.stringify(snapshot), id, key: data.key },
-          { method: "POST" }
+          { method: "POST", encType: "application/json" }
         )
       }
     }
