@@ -55,7 +55,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
   // store the file info in d1 db
   const stmt = env.DB.prepare(
     "insert into files (id, name, key, filename, slug) values (?1, ?2, ?3, ?4, ?5)"
-  ).bind(id, result.data.name, objectKey, filename)
+  ).bind(id, result.data.name, objectKey, filename, slug)
   await stmt.run()
 
   return redirect(`/${id}`)
@@ -86,6 +86,7 @@ export default function Index() {
             type="text"
             placeholder="Enter name"
             className="border-2 border-gray-400 px-1 py-1 rounded-sm focus:border-blue-600 outline-none disabled:bg-blue-500"
+            required
           />
           <button
             className="bg-blue-600 text-gray-100 px-2 py-1 rounded"
@@ -100,7 +101,7 @@ export default function Index() {
             <Link
               key={item.id}
               to={`/${item.id}`}
-              className="text-blue-600 hover:underline inline-block w-min"
+              className="text-blue-600 hover:underline inline-block w-max"
             >
               {item.name}
             </Link>

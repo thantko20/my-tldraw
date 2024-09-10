@@ -27,8 +27,8 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
     console.log("object not found")
     throw new Response("File not found", { status: 404 })
   }
-  const snapshot = await object.json()
-  return json({ data: fileItem, snapshot })
+  const rawSnapshot = await object.text()
+  return json({ data: fileItem, rawSnapshot })
 }
 
 const schema = z.object({
@@ -45,10 +45,12 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 }
 
 export default function TldrawPage() {
-  const { snapshot, data } = useLoaderData<typeof loader>()
+  const { rawSnapshot, data } = useLoaderData<typeof loader>()
   const [store] = useState(() => {
     const newStore = createTLStore()
-    loadSnapshot(newStore, snapshot as object)
+    if (rawSnapshot !== "") {
+      loadSnapshot(newStore, JSON.parse(rawSnapshot))
+    }
     return newStore
   })
 

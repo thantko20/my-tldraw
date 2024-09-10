@@ -29,6 +29,9 @@ pages_build_output_dir = "./build/client"
 binding = "DB"
 database_name = "tldraw_db"
 database_id = "bf2b2946-193d-4664-8ac6-e40ecd515f78"
+preview_database_id = "local-test"
+migrations_table = "migrations"
+migrations_dir = "migrations"
 
 # Bind a Durable Object. Durable objects are a scale-to-zero compute primitive based on the actor model.
 # Durable Objects can live for as long as needed. Use these when you need a long-running "server", such as in realtime apps.
