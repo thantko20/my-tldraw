@@ -1,5 +1,9 @@
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/cloudflare"
-import { Form, Link } from "@remix-run/react"
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction
+} from "@remix-run/cloudflare"
+import { Form, Link, redirect, useLoaderData } from "@remix-run/react"
 
 export const meta: MetaFunction = () => {
   return [
@@ -39,9 +43,19 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       filename
     })
   )
+  return redirect(`/_/${id}`)
+}
+
+export const loader = async ({ context }: LoaderFunctionArgs) => {
+  const env = context.cloudflare.env
+  const kvs = await env.TLDRAW.list()
+  return { keys: kvs.keys }
 }
 
 export default function Index() {
+  const { keys } = useLoaderData<typeof loader>()
+  console.log(keys)
+
   return (
     <div className="font-sans p-4">
       <div className="max-w-lg mx-auto">
@@ -57,6 +71,17 @@ export default function Index() {
             Submit
           </button>
         </Form>
+        <div className="mt-4">
+          {keys.map((key) => (
+            <Link
+              key={key.name}
+              to={`/_/${key.name}`}
+              className="text-blue-600 hover:underline"
+            >
+              {key.name}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )
