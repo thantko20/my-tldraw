@@ -8,68 +8,52 @@ import { useEffect, useState } from "react"
 import { createTLStore, getSnapshot, loadSnapshot, Tldraw } from "tldraw"
 import "tldraw/tldraw.css"
 import { z } from "zod"
-
-const kvMetadataSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  key: z.string(),
-  filename: z.string()
-})
+import { fileItemSchema } from "~/schema"
 
 export const loader = async ({ context, params }: LoaderFunctionArgs) => {
-  const slug = params.slug ?? ""
-  if (!slug) {
+  const id = params.id ?? ""
+  if (!id) {
     console.log("Slug not found")
     throw new Response("Id is missing", { status: 400 })
   }
   const env = context.cloudflare.env
-  const rawKv = await env.TLDRAW.get(slug)
-  if (!rawKv) {
-    console.log("kv not found")
-    throw new Response("File not found", { status: 404 })
-  }
+  const rawItem = await env.DB.prepare("select * from files where id = ?1")
+    .bind(id)
+    .first()
 
-  const validKv = kvMetadataSchema.safeParse(JSON.parse(rawKv))
-
-  if (!validKv.success) {
-    console.log("kv not success", validKv.error)
-    throw new Response("file not found", { status: 404 })
-  }
-
-  const object = await env.CONTENT_BUCKET.get(validKv.data.key)
+  const fileItem = fileItemSchema.parse(rawItem)
+  const object = await env.CONTENT_BUCKET.get(fileItem.key)
   if (!object) {
     console.log("object not found")
     throw new Response("File not found", { status: 404 })
   }
-  const raw = await object.text()
-  return json({ data: validKv.data, raw, id: slug })
+  const snapshot = await object.json()
+  return json({ data: fileItem, snapshot })
 }
 
+const schema = z.object({
+  snapshot: z.string(),
+  key: z.string()
+})
+
 export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const result: { id: string; snapshot: string; key: string } =
-    await request.json()
-  if (
-    typeof result.id === "string" &&
-    typeof result.snapshot === "string" &&
-    typeof result.key === "string"
-  ) {
-    const env = context.cloudflare.env
-    await env.CONTENT_BUCKET.put(result.key, result.snapshot)
-  }
+  const rawJson = await request.json()
+  const result = schema.parse(rawJson)
+  const env = context.cloudflare.env
+  await env.CONTENT_BUCKET.put(result.key, result.snapshot)
   return null
 }
 
 export default function TldrawPage() {
-  const { raw, id, data } = useLoaderData<typeof loader>()
+  const { snapshot, data } = useLoaderData<typeof loader>()
   const [store] = useState(() => {
     const newStore = createTLStore()
-    if (raw !== "") {
-      loadSnapshot(newStore, JSON.parse(raw))
-    }
+    loadSnapshot(newStore, snapshot as object)
     return newStore
   })
 
   const fetcher = useFetcher()
+  const busy = fetcher.state === "submitting"
 
   useEffect(() => {
     const onSave = (e: KeyboardEvent) => {
@@ -77,7 +61,7 @@ export default function TldrawPage() {
         e.preventDefault()
         const snapshot = getSnapshot(store)
         fetcher.submit(
-          { snapshot: JSON.stringify(snapshot), id, key: data.key },
+          { snapshot: JSON.stringify(snapshot), key: data.key },
           { method: "POST", encType: "application/json" }
         )
       }
@@ -86,10 +70,15 @@ export default function TldrawPage() {
     return () => {
       window.removeEventListener("keydown", onSave)
     }
-  }, [fetcher, store, id, data.key])
+  }, [fetcher, store, data.key])
 
   return (
     <div className="fixed inset-0">
+      {busy ? (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-10 grid place-content-center">
+          Loading
+        </div>
+      ) : null}
       <Tldraw store={store} />
     </div>
   )
