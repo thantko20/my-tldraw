@@ -53,8 +53,6 @@ id = "3316c1375a974cdca16230a5780c3d9c"
 # binding = "MY_QUEUE"
 # queue = "my-queue"
 
-# Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
-# Docs: https://developers.cloudflare.com/pages/functions/bindings/#r2-buckets
 [[r2_buckets]]
 binding = "CONTENT_BUCKET"
 bucket_name = "tldraw-content"
