@@ -14,9 +14,11 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   return (
     <div className="font-sans p-4">
-      <Link to="/_" className="text-blue-600 hover:underline">
-        Go to tldraw
-      </Link>
+      <div>
+        <Link to="/_" className="text-blue-600 hover:underline">
+          Go to tldraw
+        </Link>
+      </div>
     </div>
   )
 }
