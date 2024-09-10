@@ -43,7 +43,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
       filename
     })
   )
-  return redirect(`/_/${id}`)
+  return redirect(`/${id}`)
 }
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
@@ -54,7 +54,6 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
 
 export default function Index() {
   const { keys } = useLoaderData<typeof loader>()
-  console.log(keys)
 
   return (
     <div className="font-sans p-4">
@@ -75,7 +74,7 @@ export default function Index() {
           {keys.map((key) => (
             <Link
               key={key.name}
-              to={`/_/${key.name}`}
+              to={`/${key.name}`}
               className="text-blue-600 hover:underline"
             >
               {key.name}
