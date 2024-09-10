@@ -1,16 +1,16 @@
 import {
+  ActionFunctionArgs,
   json,
   type LoaderFunctionArgs,
   type MetaFunction
 } from "@remix-run/node"
-import { useLoaderData } from "@remix-run/react"
-import { api } from "convex/_generated/api"
-import { Id } from "convex/_generated/dataModel"
-import { ConvexHttpClient } from "convex/browser"
-import { useMutation } from "convex/react"
+import { useFetcher, useLoaderData } from "@remix-run/react"
 import { useCallback, useEffect, useState } from "react"
 import { createTLStore, getSnapshot, loadSnapshot, Tldraw } from "tldraw"
 import "tldraw/tldraw.css"
+import { readFile, writeFile } from "fs/promises"
+import path from "node:path"
+import { z } from "zod"
 
 export const meta: MetaFunction = () => {
   return [
@@ -19,47 +19,55 @@ export const meta: MetaFunction = () => {
   ]
 }
 
+const schema = z.object({
+  id: z.string(),
+  snapshot: z.string()
+})
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const result = schema.safeParse(await request.json())
+  if (!result.success) {
+    return new Response(JSON.stringify(result.error), {
+      status: 400,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+  await writeFile(
+    path.resolve(path.join("files", result.data.id)),
+    result.data.snapshot
+  )
+  return json({ message: "Success" })
+}
+
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const id = params.id ?? ""
-  const convex = new ConvexHttpClient(process.env.CONVEX_URL!)
-  const { draw, fileUrl } = await convex.query(api.tldraw.getSnapshot, {
-    id: id as Id<"tldraw">
-  })
+  const fileContent = await readFile(path.resolve(path.join("files", id)))
 
-  const snapshot = await fetch(fileUrl).then((res) => res.json())
-
-  return json({ draw, snapshot })
+  return json({ snapshot: JSON.parse(fileContent.toString("utf-8")), id })
 }
 
 export default function Draw() {
-  const { draw, snapshot } = useLoaderData<typeof loader>()
+  const fetcher = useFetcher()
+  const { snapshot, id } = useLoaderData<typeof loader>()
   const [store] = useState(() => {
     const newStore = createTLStore()
     loadSnapshot(newStore, snapshot)
     return newStore
   })
 
-  const saveSnapshot = useMutation(api.tldraw.saveSnapshot)
-  const generateSnapshotUrl = useMutation(api.tldraw.generateSnapshotUrl)
-
   const save = useCallback(async () => {
     try {
       const snapshot = getSnapshot(store)
-      const url = await generateSnapshotUrl()
-
-      const headers = new Headers()
-      headers.set("Content-Type", "application/json")
-      const response = await fetch(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(snapshot)
-      })
-      const { storageId } = await response.json()
-      await saveSnapshot({ id: draw!._id, storageId })
+      fetcher.submit(
+        { snapshot: JSON.stringify(snapshot), id },
+        { method: "POST", encType: "application/json" }
+      )
     } catch (error) {
       console.log(error)
     }
-  }, [draw, generateSnapshotUrl, saveSnapshot, store])
+  }, [store])
 
   useEffect(() => {
     const onCtlS = (e: KeyboardEvent) => {
