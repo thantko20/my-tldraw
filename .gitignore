@@ -3,9 +3,6 @@ node_modules
 /.cache
 /build
 .env
-
-.env.local
-
 .dev.vars
 
 .wrangler

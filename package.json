@@ -1,5 +1,5 @@
 {
-  "name": "my-remix-app",
+  "name": "remix-cf",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -15,20 +15,17 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@remix-run/cloudflare": "^2.12.0",
-    "@remix-run/cloudflare-pages": "^2.12.0",
-    "@remix-run/react": "^2.11.2",
-    "@remix-run/serve": "^2.11.2",
+    "@remix-run/cloudflare": "^2.11.1",
+    "@remix-run/cloudflare-pages": "^2.11.1",
+    "@remix-run/react": "^2.11.1",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tldraw": "^2.4.6",
-    "zod": "^3.23.8"
+    "tldraw": "^2.4.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240903.0",
-    "@remix-run/dev": "^2.11.2",
-    "@types/better-sqlite3": "^7.6.11",
+    "@remix-run/dev": "^2.11.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
@@ -45,7 +42,7 @@
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1",
-    "wrangler": "^3.75.0"
+    "wrangler": "3.57.1"
   },
   "engines": {
     "node": ">=20.0.0"
