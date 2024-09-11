@@ -20,7 +20,7 @@ export const action = async ({
       return json({ errors: {}, message: "Failed to upload assets" }, 500)
     }
     return json({
-      url: `${context.cloudflare.env}/${params.name}`
+      url: `${context.cloudflare.env.R2_ASSETS_BUCKET_PATH}/${params.name}`
     })
   }
 }
