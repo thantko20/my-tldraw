@@ -5,15 +5,14 @@ import type {
 } from "@remix-run/cloudflare"
 import {
   Form,
-  Link,
   redirect,
   useActionData,
   useLoaderData,
   useNavigation
 } from "@remix-run/react"
-import clsx from "clsx"
 import { z } from "zod"
 import { createTldraw, deleteTldraw } from "~/actions"
+import { TldrawItem } from "~/components/tldraw-item"
 import { getTldraws } from "~/data"
 import { createTldrawSchema, deleteTldrawSchema } from "~/schema"
 import { handleActionError } from "~/utils"
@@ -102,33 +101,7 @@ export default function Index() {
         </Form>
         <div className="mt-4 flex flex-col gap-2">
           {data.map((item) => (
-            <div key={item.id} className="flex justify-between items-center">
-              <Link
-                to={`/${item.id}`}
-                className="text-blue-600 hover:underline inline-block w-max"
-              >
-                {item.name}
-              </Link>
-              <Form method="post">
-                <input type="hidden" name="id" value={item.id} />
-                <button
-                  name="_action"
-                  value="delete"
-                  className={clsx(
-                    "text-red-400 underline text-sm hover:text-red-500 disabled:text-gray-400"
-                  )}
-                  // disabled for now
-                  disabled
-                  // disabled={
-                  //   navigation.formAction === "/?index" &&
-                  //   navigation.formData?.get("_action") === "delete" &&
-                  //   navigation.formData?.get("id") === item.id
-                  // }
-                >
-                  Delete
-                </button>
-              </Form>
-            </div>
+            <TldrawItem key={item.id} item={item} />
           ))}
         </div>
       </div>

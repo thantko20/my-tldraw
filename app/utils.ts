@@ -31,3 +31,6 @@ export const handleActionError = async (error: unknown) => {
 
   return json({ message: "Unknown Error", errors: {} }, 500)
 }
+
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms))

@@ -5,7 +5,13 @@ import {
 } from "@remix-run/cloudflare"
 import { useFetcher, useLoaderData } from "@remix-run/react"
 import { useEffect, useState } from "react"
-import { createTLStore, getSnapshot, loadSnapshot, Tldraw } from "tldraw"
+import {
+  createTLStore,
+  getSnapshot,
+  loadSnapshot,
+  TLAssetStore,
+  Tldraw
+} from "tldraw"
 import "tldraw/tldraw.css"
 import { z } from "zod"
 import { saveSnapshot } from "~/actions"
@@ -32,16 +38,41 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 
 export default function TldrawPage() {
   const { rawSnapshot, data } = useLoaderData<typeof loader>()
+  const fetcher = useFetcher()
+  const busySaving = fetcher.state === "submitting"
+
+  // const assetFetcher = useFetcher()
+
   const [store] = useState(() => {
-    const newStore = createTLStore()
+    const newStore = createTLStore({
+      assets: {
+        async upload(_asset, file) {
+          const response = await fetch(
+            `/api/uploads/${encodeURIComponent(file.name)}`,
+            {
+              method: "PUT",
+              body: file
+            }
+          )
+
+          if (!response.ok) {
+            console.log(response.statusText)
+            throw new Error("Failed to upload assets")
+          }
+          const rawJson = await response.json()
+          const { url } = z.object({ url: z.string() }).parse(rawJson)
+          return url
+        },
+        resolve(asset) {
+          return asset.props.src
+        }
+      }
+    })
     if (rawSnapshot !== "") {
       loadSnapshot(newStore, JSON.parse(rawSnapshot))
     }
     return newStore
   })
-
-  const fetcher = useFetcher()
-  const busy = fetcher.state === "submitting"
 
   useEffect(() => {
     const onSave = (e: KeyboardEvent) => {
@@ -62,12 +93,12 @@ export default function TldrawPage() {
 
   return (
     <div className="fixed inset-0">
-      {busy ? (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-10 grid place-content-center">
-          Loading
+      <Tldraw store={store} />
+      {busySaving ? (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] grid place-content-center text-gray-100 text-xl font-semibold">
+          Saving
         </div>
       ) : null}
-      <Tldraw store={store} />
     </div>
   )
 }

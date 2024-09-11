@@ -57,6 +57,10 @@ id = "3316c1375a974cdca16230a5780c3d9c"
 binding = "CONTENT_BUCKET"
 bucket_name = "tldraw-content"
 
+[[r2_buckets]]
+binding = "ASSETS_BUCKET"
+bucket_name = "tldraw-assets"
+
 # Bind another Worker service. Use this binding to call another Worker without network overhead.
 # Docs: https://developers.cloudflare.com/pages/functions/bindings/#service-bindings
 # [[services]]
@@ -69,17 +73,14 @@ bucket_name = "tldraw-content"
 
 ######## PREVIEW environment config ########
 
-# [env.preview.vars]
-# API_KEY = "xyz789"
-
 # [[env.preview.kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"
 # id = "<PREVIEW_NAMESPACE_ID>"
 
 ######## PRODUCTION environment config ########
 
-# [env.production.vars]
-# API_KEY = "abc123"
+[vars]
+R2_ASSETS_BUCKET_PATH = "https://pub-4d09e2dfecbf4a4ab7d5b29af22c4bba.r2.dev"
 
 # [[env.production.kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"
