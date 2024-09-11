@@ -1,5 +1,9 @@
 import slugify from "slugify"
-import { CreateTldrawSchema, fileItemSchema } from "./schema"
+import {
+  CreateTldrawSchema,
+  fileItemSchema,
+  SaveSnapshotSchema
+} from "./schema"
 import { nanoid } from "nanoid"
 
 export const createTldraw = async (
@@ -39,4 +43,11 @@ export const deleteTldraw = async (
     await DB.prepare("delete from files where id = ?1").bind(file.id).run()
     await CONTENT_BUCKET.delete(file.key)
   }
+}
+
+export const saveSnapshot = async (
+  data: SaveSnapshotSchema,
+  { CONTENT_BUCKET }: Pick<Env, "CONTENT_BUCKET">
+) => {
+  await CONTENT_BUCKET.put(data.key, data.snapshot)
 }

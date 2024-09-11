@@ -24,3 +24,10 @@ export const deleteTldrawSchema = z.object({
 })
 
 export type DeleteTldrawSchema = z.infer<typeof deleteTldrawSchema>
+
+export const saveSnapshotSchema = z.object({
+  key: z.string(),
+  snapshot: z.string()
+})
+
+export type SaveSnapshotSchema = z.infer<typeof saveSnapshotSchema>

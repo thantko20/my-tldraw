@@ -13,11 +13,8 @@ import {
 import clsx from "clsx"
 import { z } from "zod"
 import { createTldraw, deleteTldraw } from "~/actions"
-import {
-  createTldrawSchema,
-  deleteTldrawSchema,
-  fileListSchema
-} from "~/schema"
+import { getTldraws } from "~/data"
+import { createTldrawSchema, deleteTldrawSchema } from "~/schema"
 import { handleActionError } from "~/utils"
 
 export const meta: MetaFunction = () => {
@@ -60,14 +57,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 }
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {
-  const env = context.cloudflare.env
-  const stmt = env.DB.prepare("select * from files")
-  const data = await stmt.all()
-  if (data.error) {
-    throw new Response("Failed to load data", { status: 500 })
-  }
-  const fileList = fileListSchema.parse(data.results)
-  return { data: fileList }
+  return getTldraws(context.cloudflare.env)
 }
 
 export default function Index() {

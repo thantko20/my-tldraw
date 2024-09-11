@@ -8,39 +8,20 @@ import { useEffect, useState } from "react"
 import { createTLStore, getSnapshot, loadSnapshot, Tldraw } from "tldraw"
 import "tldraw/tldraw.css"
 import { z } from "zod"
-import { fileItemSchema } from "~/schema"
+import { saveSnapshot } from "~/actions"
+import { getTldrawById } from "~/data"
+import { saveSnapshotSchema } from "~/schema"
 
 export const loader = async ({ context, params }: LoaderFunctionArgs) => {
-  const id = params.id ?? ""
-  if (!id) {
-    console.log("Slug not found")
-    throw new Response("Id is missing", { status: 400 })
-  }
-  const env = context.cloudflare.env
-  const rawItem = await env.DB.prepare("select * from files where id = ?1")
-    .bind(id)
-    .first()
-
-  const fileItem = fileItemSchema.parse(rawItem)
-  const object = await env.CONTENT_BUCKET.get(fileItem.key)
-  if (!object) {
-    console.log("object not found")
-    throw new Response("File not found", { status: 404 })
-  }
-  const rawSnapshot = await object.text()
-  return json({ data: fileItem, rawSnapshot })
+  const id = z.string().parse(params.id)
+  const result = await getTldrawById(id, context.cloudflare.env)
+  return json(result)
 }
-
-const schema = z.object({
-  snapshot: z.string(),
-  key: z.string()
-})
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   const rawJson = await request.json()
-  const result = schema.parse(rawJson)
-  const env = context.cloudflare.env
-  await env.CONTENT_BUCKET.put(result.key, result.snapshot)
+  const data = saveSnapshotSchema.parse(rawJson)
+  await saveSnapshot(data, context.cloudflare.env)
   return null
 }
 
