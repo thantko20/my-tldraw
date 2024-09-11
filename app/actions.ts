@@ -49,5 +49,9 @@ export const saveSnapshot = async (
   data: SaveSnapshotSchema,
   { CONTENT_BUCKET }: Pick<Env, "CONTENT_BUCKET">
 ) => {
-  await CONTENT_BUCKET.put(data.key, data.snapshot)
+  await CONTENT_BUCKET.put(data.key, data.snapshot, {
+    httpMetadata: {
+      contentType: "application/json"
+    }
+  })
 }
