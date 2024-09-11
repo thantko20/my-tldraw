@@ -1,24 +1,33 @@
 import { json } from "@remix-run/cloudflare"
 import { ZodError } from "zod"
 
-export const handleActionError = (error: unknown) => {
+export const handleActionError = async (error: unknown) => {
   if (error instanceof Response) {
     if (error.status >= 500) {
-      throw error
+      console.log("Unknown Error", error)
     }
 
-    return json({ error: error.statusText, status: "error" }, error.status)
+    const err = {
+      message: await error.text(),
+      errors: {}
+    }
+
+    return json(err, error.status)
   }
 
   if (error instanceof ZodError) {
     return json(
       {
-        error: error.flatten().formErrors[0],
-        status: "error"
+        errors: error.flatten().fieldErrors,
+        message: "Validation Error"
       },
       400
     )
   }
 
-  throw error
+  if (error instanceof Error) {
+    return json({ message: error.message, errors: {} }, 500)
+  }
+
+  return json({ message: "Unknown Error", errors: {} }, 500)
 }

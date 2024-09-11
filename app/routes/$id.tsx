@@ -11,6 +11,7 @@ import { z } from "zod"
 import { saveSnapshot } from "~/actions"
 import { getTldrawById } from "~/data"
 import { saveSnapshotSchema } from "~/schema"
+import { handleActionError } from "~/utils"
 
 export const loader = async ({ context, params }: LoaderFunctionArgs) => {
   const id = z.string().parse(params.id)
@@ -19,10 +20,14 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
 }
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const rawJson = await request.json()
-  const data = saveSnapshotSchema.parse(rawJson)
-  await saveSnapshot(data, context.cloudflare.env)
-  return null
+  try {
+    const rawJson = await request.json()
+    const data = saveSnapshotSchema.parse(rawJson)
+    await saveSnapshot(data, context.cloudflare.env)
+    return null
+  } catch (error) {
+    return handleActionError(error)
+  }
 }
 
 export default function TldrawPage() {

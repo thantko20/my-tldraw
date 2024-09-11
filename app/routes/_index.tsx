@@ -7,6 +7,7 @@ import {
   Form,
   Link,
   redirect,
+  useActionData,
   useLoaderData,
   useNavigation
 } from "@remix-run/react"
@@ -62,6 +63,8 @@ export const loader = async ({ context }: LoaderFunctionArgs) => {
 
 export default function Index() {
   const { data } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
+
   const navigation = useNavigation()
   const busyCreating =
     navigation.formAction === "/?index" &&
@@ -70,24 +73,32 @@ export default function Index() {
   return (
     <div className="font-sans p-4">
       <div className="max-w-lg mx-auto">
-        <Form method="post" className="flex flex-col gap-2">
-          <input
-            name="name"
-            type="text"
-            placeholder="Enter name"
-            className="border-2 border-gray-300 px-1 py-1 rounded focus:border-blue-600 outline-none"
-            required
-            disabled={busyCreating}
-          />
-          <button
-            className="bg-blue-600 text-gray-100 px-2 py-1 rounded disabled:bg-blue-400"
-            type="submit"
-            disabled={busyCreating}
-            name="_action"
-            value="create"
+        {actionData?.message ? (
+          <div
+            className="bg-red-500/20 text-red-500 p-2 rounded border border-red-500"
+            role="alert"
           >
-            {busyCreating ? "Creating..." : "Create"}
-          </button>
+            {actionData.message}
+          </div>
+        ) : null}
+        <Form method="post" className="mt-2">
+          <fieldset disabled={busyCreating} className="flex flex-col gap-2">
+            <input
+              name="name"
+              type="text"
+              placeholder="Enter name"
+              className="border-2 border-gray-300 px-1 py-1 rounded focus:border-blue-600 outline-none disabled:border-gray-200 disabled:text-gray-400"
+              required
+            />
+            <button
+              className="bg-blue-600 text-gray-100 px-2 py-1 rounded disabled:bg-blue-400"
+              type="submit"
+              name="_action"
+              value="create"
+            >
+              {busyCreating ? "Creating..." : "Create"}
+            </button>
+          </fieldset>
         </Form>
         <div className="mt-4 flex flex-col gap-2">
           {data.map((item) => (
@@ -106,11 +117,13 @@ export default function Index() {
                   className={clsx(
                     "text-red-400 underline text-sm hover:text-red-500 disabled:text-gray-400"
                   )}
-                  disabled={
-                    navigation.formAction === "/?index" &&
-                    navigation.formData?.get("_action") === "delete" &&
-                    navigation.formData?.get("id") === item.id
-                  }
+                  // disabled for now
+                  disabled
+                  // disabled={
+                  //   navigation.formAction === "/?index" &&
+                  //   navigation.formData?.get("_action") === "delete" &&
+                  //   navigation.formData?.get("id") === item.id
+                  // }
                 >
                   Delete
                 </button>

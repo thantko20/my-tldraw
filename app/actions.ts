@@ -16,6 +16,14 @@ export const createTldraw = async (
   const folder = "content"
   const objectKey = `/${folder}/${filename}`
 
+  const nameExists = await DB.prepare("select 1 from files where name = ?1")
+    .bind(data.name)
+    .first()
+
+  if (nameExists) {
+    throw new Response("Name already exists", { status: 400 })
+  }
+
   // create a new file in r2
   const object = await CONTENT_BUCKET.put(objectKey, "", {
     httpMetadata: {
