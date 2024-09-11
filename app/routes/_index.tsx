@@ -5,17 +5,20 @@ import type {
 } from "@remix-run/cloudflare"
 import {
   Form,
-  json,
   Link,
   redirect,
   useLoaderData,
   useNavigation
 } from "@remix-run/react"
 import clsx from "clsx"
-import { nanoid } from "nanoid"
-import slugify from "slugify"
 import { z } from "zod"
-import { fileItemSchema, fileListSchema } from "~/schema"
+import { createTldraw, deleteTldraw } from "~/actions"
+import {
+  createTldrawSchema,
+  deleteTldrawSchema,
+  fileListSchema
+} from "~/schema"
+import { handleActionError } from "~/utils"
 
 export const meta: MetaFunction = () => {
   return [
@@ -27,68 +30,33 @@ export const meta: MetaFunction = () => {
   ]
 }
 
-const createSchema = z.object({
-  name: z.string(),
-  _action: z.literal("create")
-})
-
-const deleteSchema = z.object({
-  id: z.string(),
-  _action: z.literal("delete")
-})
-
-const schema = z.union([createSchema, deleteSchema])
+const actionSchema = z.enum(["create", "delete"])
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const formData = await request.formData()
-  const result = schema.safeParse(Object.fromEntries(formData))
-  if (!result.success) {
-    return json(
-      { error: result.error.flatten().formErrors[0], status: "error" },
-      400
-    )
-  }
+  try {
+    const formData = await request.formData()
+    const { _action, ...data } = Object.fromEntries(formData)
+    const validAction = actionSchema.parse(_action)
 
-  const env = context.cloudflare.env
+    const env = context.cloudflare.env
 
-  if (result.data._action === "create") {
-    const data = result.data
-    const id = nanoid()
-    const slug = slugify(data.name)
-    const filename = slug + ".json"
-    const folder = "content"
-    const objectKey = `/${folder}/${filename}`
+    if (validAction === "create") {
+      const validData = createTldrawSchema.parse(data)
+      const { id } = await createTldraw(validData, env)
 
-    // create a new file in r2
-    const object = await env.CONTENT_BUCKET.put(objectKey, "")
-    if (!object) {
-      return json({ error: "failed to create file", status: "error" }, 500)
+      return redirect(`/${id}`)
     }
 
-    // store the file info in d1 db
-    const stmt = env.DB.prepare(
-      "insert into files (id, name, key, filename, slug) values (?1, ?2, ?3, ?4, ?5)"
-    ).bind(id, data.name, objectKey, filename, slug)
-    await stmt.run()
-
-    return redirect(`/${id}`)
-  }
-
-  if (result.data._action === "delete") {
-    const record = await env.DB.prepare("select * from files where id = ?1")
-      .bind(result.data.id)
-      .first()
-    if (record) {
-      const file = fileItemSchema.parse(record)
-      await env.DB.prepare("delete from files where id = ?1")
-        .bind(file.id)
-        .run()
-      await env.CONTENT_BUCKET.delete(file.key)
+    if (validAction === "delete") {
+      const { id } = deleteTldrawSchema.parse(data)
+      await deleteTldraw(id, env)
+      return redirect("/")
     }
-    return redirect("/")
-  }
 
-  return null
+    return null
+  } catch (error) {
+    return handleActionError(error)
+  }
 }
 
 export const loader = async ({ context }: LoaderFunctionArgs) => {

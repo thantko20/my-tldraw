@@ -12,3 +12,15 @@ export type FileItem = z.infer<typeof fileItemSchema>
 
 export const fileListSchema = z.array(fileItemSchema)
 export type FileList = z.infer<typeof fileListSchema>
+
+export const createTldrawSchema = z.object({
+  name: z.string()
+})
+
+export type CreateTldrawSchema = z.infer<typeof createTldrawSchema>
+
+export const deleteTldrawSchema = z.object({
+  id: z.string()
+})
+
+export type DeleteTldrawSchema = z.infer<typeof deleteTldrawSchema>
