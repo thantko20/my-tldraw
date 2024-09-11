@@ -5,13 +5,7 @@ import {
 } from "@remix-run/cloudflare"
 import { useFetcher, useLoaderData } from "@remix-run/react"
 import { useEffect, useState } from "react"
-import {
-  createTLStore,
-  getSnapshot,
-  loadSnapshot,
-  TLAssetStore,
-  Tldraw
-} from "tldraw"
+import { createTLStore, getSnapshot, loadSnapshot, Tldraw } from "tldraw"
 import "tldraw/tldraw.css"
 import { z } from "zod"
 import { saveSnapshot } from "~/actions"
@@ -56,7 +50,7 @@ export default function TldrawPage() {
           )
 
           if (!response.ok) {
-            console.log(response.statusText)
+            console.log(response)
             throw new Error("Failed to upload assets")
           }
           const rawJson = await response.json()

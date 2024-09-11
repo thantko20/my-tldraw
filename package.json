@@ -13,6 +13,7 @@
     "typecheck": "tsc",
     "typegen": "wrangler types",
     "preview": "npm run build && wrangler pages dev",
+    "preview:remote": "npm run build && wrangler pages dev ./build/client --r2 ASSETS_BUCKET",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
