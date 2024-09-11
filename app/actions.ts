@@ -17,7 +17,11 @@ export const createTldraw = async (
   const objectKey = `/${folder}/${filename}`
 
   // create a new file in r2
-  const object = await CONTENT_BUCKET.put(objectKey, "")
+  const object = await CONTENT_BUCKET.put(objectKey, "", {
+    httpMetadata: {
+      contentType: "application/json"
+    }
+  })
   if (!object) {
     throw new Response("failed to create file", { status: 500 })
   }
