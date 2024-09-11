@@ -1,7 +1,8 @@
 import {
   ActionFunctionArgs,
   json,
-  LoaderFunctionArgs
+  LoaderFunctionArgs,
+  redirect
 } from "@remix-run/cloudflare"
 import { useFetcher, useLoaderData } from "@remix-run/react"
 import { useEffect, useState } from "react"
@@ -11,9 +12,20 @@ import { z } from "zod"
 import { saveSnapshot } from "~/actions"
 import { getTldrawById } from "~/data"
 import { saveSnapshotSchema } from "~/schema"
+import { getSession } from "~/sessions"
 import { handleActionError } from "~/utils"
 
-export const loader = async ({ context, params }: LoaderFunctionArgs) => {
+export const loader = async ({
+  context,
+  params,
+  request
+}: LoaderFunctionArgs) => {
+  const session = await getSession(request.headers.get("Cookie"))
+  if (!session.has("userId")) {
+    return redirect(
+      `/auth/login?redirect_url=${encodeURIComponent(request.url)}`
+    )
+  }
   const id = z.string().parse(params.id)
   const result = await getTldrawById(id, context.cloudflare.env)
   return json(result)
