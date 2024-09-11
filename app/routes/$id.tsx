@@ -12,7 +12,7 @@ import { z } from "zod"
 import { saveSnapshot } from "~/actions"
 import { getTldrawById } from "~/data"
 import { saveSnapshotSchema } from "~/schema"
-import { getSession } from "~/sessions"
+import { createSessionStorage } from "~/sessions"
 import { handleActionError } from "~/utils"
 
 export const loader = async ({
@@ -20,6 +20,7 @@ export const loader = async ({
   params,
   request
 }: LoaderFunctionArgs) => {
+  const { getSession } = createSessionStorage(context.cloudflare.env)
   const session = await getSession(request.headers.get("Cookie"))
   if (!session.has("userId")) {
     return redirect(

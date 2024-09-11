@@ -15,7 +15,7 @@ import { createTldraw, deleteTldraw } from "~/actions"
 import { TldrawItem } from "~/components/tldraw-item"
 import { getTldraws } from "~/data"
 import { createTldrawSchema, deleteTldrawSchema } from "~/schema"
-import { getSession } from "~/sessions"
+import { createSessionStorage } from "~/sessions"
 import { handleActionError } from "~/utils"
 
 export const meta: MetaFunction = () => {
@@ -58,6 +58,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
 }
 
 export const loader = async ({ context, request }: LoaderFunctionArgs) => {
+  const { getSession } = createSessionStorage(context.cloudflare.env)
   const session = await getSession(request.headers.get("Cookie"))
   if (!session.has("userId")) {
     return redirect(

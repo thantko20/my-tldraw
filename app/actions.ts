@@ -5,7 +5,7 @@ import {
   SaveSnapshotSchema
 } from "./schema"
 import { nanoid } from "nanoid"
-import { getSession } from "./sessions"
+import { createSessionStorage } from "./sessions"
 import { redirect } from "@remix-run/cloudflare"
 
 export const createTldraw = async (
@@ -70,8 +70,10 @@ export const saveSnapshot = async (
   })
 }
 
-export const verifySession = async (request: Request) => {
+export const verifySession = async (request: Request, env: Env) => {
+  const { getSession } = createSessionStorage(env)
   const session = await getSession(request.headers.get("Cookie"))
+
   if (!session.has("userId")) {
     throw redirect(`/auth/login?redirect_url=${request.url}`)
   }

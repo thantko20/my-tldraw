@@ -5,9 +5,12 @@ import {
   redirect
 } from "@remix-run/cloudflare"
 import { Form, useLoaderData, useNavigation } from "@remix-run/react"
-import { commitSession, getSession } from "~/sessions"
+import { createSessionStorage } from "~/sessions"
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  const { getSession, commitSession } = createSessionStorage(
+    context.cloudflare.env
+  )
   const session = await getSession(request.headers.get("Cookie"))
 
   if (session.has("userId")) {
@@ -24,7 +27,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   })
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
+  const { getSession, commitSession } = createSessionStorage(
+    context.cloudflare.env
+  )
   const { search, searchParams } = new URL(request.url)
   const session = await getSession(request.headers.get("Cookie"))
   const formData = await request.formData()

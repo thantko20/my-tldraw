@@ -8,16 +8,15 @@ type SessionFlashData = {
   error: string
 }
 
-const { getSession, destroySession, commitSession } =
-  createCookieSessionStorage<SessionData, SessionFlashData>({
+export const createSessionStorage = (env: Env) => {
+  return createCookieSessionStorage<SessionData, SessionFlashData>({
     cookie: {
       name: "__session",
       httpOnly: true,
       sameSite: "lax",
       secure: true,
-      secrets: [process.env.SESSION_SECRET!],
+      secrets: [env.SESSION_SECRET],
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24)
     }
   })
-
-export { getSession, destroySession, commitSession }
+}
