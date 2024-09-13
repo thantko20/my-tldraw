@@ -14,7 +14,7 @@ export const TldrawItem = ({ item }: { item: TFileItem }) => {
     navigation.formData?.get("id") === item.id &&
     navigation.state === "submitting"
 
-  const busyDeleting = _action === "delete" && isBeingModified
+  const _busyDeleting = _action === "delete" && isBeingModified
 
   const busyEditing = _action === "edit" && isBeingModified
   const [editing, setEditing] = useState(false)
@@ -77,7 +77,8 @@ export const TldrawItem = ({ item }: { item: TFileItem }) => {
             className={clsx(
               "text-red-400 underline text-sm hover:text-red-500 disabled:text-gray-400"
             )}
-            disabled={busyDeleting}
+            // disabled={busyDeleting}
+            disabled
           >
             Delete
           </button>
