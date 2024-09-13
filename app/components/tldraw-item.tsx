@@ -1,9 +1,10 @@
 import { Form, Link, useNavigation } from "@remix-run/react"
 import clsx from "clsx"
 import { Check, Pencil } from "lucide-react"
-import { useEffect, useState } from "react"
+import { ElementRef, useEffect, useRef, useState } from "react"
 import { FileItem as TFileItem } from "~/schema"
 import { Input } from "./input"
+import { tick } from "~/utils"
 
 export const TldrawItem = ({ item }: { item: TFileItem }) => {
   const navigation = useNavigation()
@@ -18,6 +19,7 @@ export const TldrawItem = ({ item }: { item: TFileItem }) => {
 
   const busyEditing = _action === "edit" && isBeingModified
   const [editing, setEditing] = useState(false)
+  const editInputRef = useRef<ElementRef<"input">>(null)
 
   useEffect(() => {
     if (!busyEditing) {
@@ -31,6 +33,7 @@ export const TldrawItem = ({ item }: { item: TFileItem }) => {
         <Form method="post" id="edit-filename-form">
           <input type="hidden" name="id" value={item.id} />
           <Input
+            ref={editInputRef}
             className="text-sm h-6"
             defaultValue={item.name}
             name="name"
@@ -62,7 +65,11 @@ export const TldrawItem = ({ item }: { item: TFileItem }) => {
           <button
             aria-label="toggle edit filename"
             className="bg-amber-500 p-1 rounded"
-            onClick={() => setEditing(true)}
+            onClick={async () => {
+              setEditing(true)
+              await tick()
+              editInputRef.current?.focus()
+            }}
             type="button"
             key="toggle-edit"
           >

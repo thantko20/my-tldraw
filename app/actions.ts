@@ -8,6 +8,7 @@ import {
 import { nanoid } from "nanoid"
 import { createSessionStorage } from "./sessions"
 import { redirect } from "@remix-run/cloudflare"
+import { HttpException } from "./utils"
 
 export const createTldraw = async (
   data: CreateTldrawSchema,
@@ -24,7 +25,7 @@ export const createTldraw = async (
     .first()
 
   if (nameExists) {
-    throw new Response("Name already exists", { status: 400 })
+    throw new HttpException(400, "Name already exists")
   }
 
   // create a new file in r2
@@ -34,7 +35,7 @@ export const createTldraw = async (
     }
   })
   if (!object) {
-    throw new Response("failed to create file", { status: 500 })
+    throw new HttpException(500, "failed to create file")
   }
 
   // store the file info in d1 db
@@ -76,7 +77,7 @@ export const editTldraw = async (data: EditTldrawSchema, env: Env) => {
     .bind(data.id)
     .first()
   if (!exists) {
-    throw new Response("File not found", { status: 404 })
+    throw new HttpException(404, "File not found")
   }
 
   await env.DB.prepare("update files set name = ?1 where id = ?2")
