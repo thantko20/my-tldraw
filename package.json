@@ -24,6 +24,8 @@
     "clsx": "^2.1.1",
     "invariant": "^2.2.4",
     "isbot": "^4.1.0",
+    "lucide": "^0.441.0",
+    "lucide-react": "^0.441.0",
     "nanoid": "^5.0.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

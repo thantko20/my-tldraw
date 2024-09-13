@@ -11,10 +11,15 @@ import {
   useNavigation
 } from "@remix-run/react"
 import { z } from "zod"
-import { createTldraw, deleteTldraw } from "~/actions"
+import { createTldraw, deleteTldraw, editTldraw } from "~/actions"
+import { Input } from "~/components/input"
 import { TldrawItem } from "~/components/tldraw-item"
 import { getTldraws } from "~/data"
-import { createTldrawSchema, deleteTldrawSchema } from "~/schema"
+import {
+  createTldrawSchema,
+  deleteTldrawSchema,
+  editTldrawSchema
+} from "~/schema"
 import { createSessionStorage } from "~/sessions"
 import { handleActionError } from "~/utils"
 
@@ -28,7 +33,7 @@ export const meta: MetaFunction = () => {
   ]
 }
 
-const actionSchema = z.enum(["create", "delete"])
+const actionSchema = z.enum(["create", "delete", "edit"])
 
 export const action = async ({ request, context }: ActionFunctionArgs) => {
   try {
@@ -48,7 +53,13 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     if (validAction === "delete") {
       const { id } = deleteTldrawSchema.parse(data)
       await deleteTldraw(id, env)
-      return redirect("/")
+      return null
+    }
+
+    if (validAction === "edit") {
+      const result = editTldrawSchema.parse(data)
+      await editTldraw(result, env)
+      return null
     }
 
     return null
@@ -90,7 +101,7 @@ export default function Index() {
         ) : null}
         <Form method="post" className="mt-2">
           <fieldset disabled={busyCreating} className="flex flex-col gap-2">
-            <input
+            <Input
               name="name"
               type="text"
               placeholder="Enter name"

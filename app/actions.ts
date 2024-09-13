@@ -1,6 +1,7 @@
 import slugify from "slugify"
 import {
   CreateTldrawSchema,
+  EditTldrawSchema,
   fileItemSchema,
   SaveSnapshotSchema
 } from "./schema"
@@ -68,6 +69,19 @@ export const saveSnapshot = async (
       contentType: "application/json"
     }
   })
+}
+
+export const editTldraw = async (data: EditTldrawSchema, env: Env) => {
+  const exists = await env.DB.prepare("select 1 from files where id = ?1")
+    .bind(data.id)
+    .first()
+  if (!exists) {
+    throw new Response("File not found", { status: 404 })
+  }
+
+  await env.DB.prepare("update files set name = ?1 where id = ?2")
+    .bind(data.name, data.id)
+    .run()
 }
 
 export const verifySession = async (request: Request, env: Env) => {

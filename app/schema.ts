@@ -31,3 +31,8 @@ export const saveSnapshotSchema = z.object({
 })
 
 export type SaveSnapshotSchema = z.infer<typeof saveSnapshotSchema>
+
+export const editTldrawSchema = createTldrawSchema.merge(
+  z.object({ id: z.string() })
+)
+export type EditTldrawSchema = z.infer<typeof editTldrawSchema>

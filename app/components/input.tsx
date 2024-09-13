@@ -5,7 +5,7 @@ export const Input = ({ className, ...props }: InputProps) => {
   return (
     <HeadlessInput
       className={clsx(
-        "border-2 border-gray-300 px-1 py-1 rounded focus:border-blue-600 outline-none",
+        "border-2 border-gray-300 px-1 py-1 rounded focus:border-blue-600 outline-none disabled:text-gray-600",
         className
       )}
       {...props}
