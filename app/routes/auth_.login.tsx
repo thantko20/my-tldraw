@@ -5,6 +5,7 @@ import {
   redirect
 } from "@remix-run/cloudflare"
 import { Form, useLoaderData, useNavigation } from "@remix-run/react"
+import { Input } from "~/components/input"
 import { createSessionStorage } from "~/sessions"
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
@@ -72,13 +73,13 @@ export default function Login() {
           disabled={navigation.state === "submitting"}
           className="flex flex-col gap-2"
         >
-          <input
+          <Input
             type="text"
             placeholder="code"
             name="code"
             className="border-2 border-gray-300 px-1 py-1 rounded focus:border-blue-600 outline-none"
           />
-          <button className="bg-blue-600 text-gray-100 px-2 py-1 rounded">
+          <button className="bg-blue-600 text-gray-100 px-2 py-1 rounded disabled:cursor-not-allowed disabled:bg-blue-400">
             Login
           </button>
         </fieldset>
