@@ -15,8 +15,6 @@ export const TldrawItem = ({ item }: { item: TFileItem }) => {
     navigation.formData?.get("id") === item.id &&
     navigation.state === "submitting"
 
-  const _busyDeleting = _action === "delete" && isBeingModified
-
   const busyEditing = _action === "edit" && isBeingModified
   const [editing, setEditing] = useState(false)
   const editInputRef = useRef<ElementRef<"input">>(null)
