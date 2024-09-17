@@ -1,10 +1,10 @@
 import { Form, Link, useNavigation } from "@remix-run/react"
-import clsx from "clsx"
 import { Check, Pencil } from "lucide-react"
 import { ElementRef, useEffect, useRef, useState } from "react"
 import { FileItem as TFileItem } from "~/schema"
 import { Input } from "./input"
 import { tick } from "~/utils"
+import { DeleteTldrawDialog } from "./delete-tldraw-dialog"
 
 export const TldrawItem = ({ item }: { item: TFileItem }) => {
   const navigation = useNavigation()
@@ -76,20 +76,7 @@ export const TldrawItem = ({ item }: { item: TFileItem }) => {
             <Pencil className="w-4 h-4 stroke-white" />
           </button>
         )}
-        <Form method="post" action="/?index">
-          <input type="hidden" name="id" value={item.id} />
-          <button
-            name="_action"
-            value="delete"
-            className={clsx(
-              "text-red-400 underline text-sm hover:text-red-500 disabled:text-gray-400"
-            )}
-            // disabled={busyDeleting}
-            disabled
-          >
-            Delete
-          </button>
-        </Form>
+        <DeleteTldrawDialog tldrawItem={item} />
       </div>
     </div>
   )
