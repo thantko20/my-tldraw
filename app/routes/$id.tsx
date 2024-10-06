@@ -1,3 +1,4 @@
+import { Transition } from "@headlessui/react"
 import {
   ActionFunctionArgs,
   json,
@@ -5,9 +6,10 @@ import {
   redirect
 } from "@remix-run/cloudflare"
 import { useFetcher, useLoaderData } from "@remix-run/react"
-import { useEffect, useState } from "react"
+import { forwardRef, useCallback, useEffect, useState } from "react"
 import { createTLStore, getSnapshot, loadSnapshot, Tldraw } from "tldraw"
 import "tldraw/tldraw.css"
+import { useDebouncedCallback } from "use-debounce"
 import { z } from "zod"
 import { saveSnapshot } from "~/actions"
 import { getTldrawById } from "~/data"
@@ -42,6 +44,14 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     return handleActionError(error)
   }
 }
+
+const Loader = forwardRef<HTMLDivElement>(function Loader(_, ref) {
+  return (
+    <div ref={ref} className="absolute duration-150 top-4 left-[50%] z-[9999]">
+      <div className="loader"></div>
+    </div>
+  )
+})
 
 export default function TldrawPage() {
   const { rawSnapshot, data } = useLoaderData<typeof loader>()
@@ -81,31 +91,53 @@ export default function TldrawPage() {
     return newStore
   })
 
+  const saveSnapshot = useCallback(() => {
+    const snapshot = getSnapshot(store)
+    fetcher.submit(
+      { snapshot: JSON.stringify(snapshot), key: data.key },
+      { method: "POST", encType: "application/json" }
+    )
+  }, [store, data.key, fetcher])
+
+  const debouncedSaveSnapshot = useDebouncedCallback(saveSnapshot, 700)
+
   useEffect(() => {
+    store.listen(
+      () => {
+        debouncedSaveSnapshot()
+      },
+      { scope: "document", source: "user" }
+    )
+  }, [store, debouncedSaveSnapshot])
+
+  useEffect(() => {
+    const abortController = new AbortController()
     const onSave = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === "s") {
         e.preventDefault()
-        const snapshot = getSnapshot(store)
-        fetcher.submit(
-          { snapshot: JSON.stringify(snapshot), key: data.key },
-          { method: "POST", encType: "application/json" }
-        )
+        saveSnapshot()
       }
     }
-    window.addEventListener("keydown", onSave)
+    window.addEventListener("keydown", onSave, {
+      signal: abortController.signal
+    })
     return () => {
-      window.removeEventListener("keydown", onSave)
+      abortController.abort()
     }
-  }, [fetcher, store, data.key])
+  }, [fetcher, store, data.key, saveSnapshot])
 
   return (
     <div className="fixed inset-0">
       <Tldraw store={store} />
-      {busySaving ? (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] grid place-content-center text-gray-100 text-xl font-semibold">
-          Saving
-        </div>
-      ) : null}
+      <Transition
+        show={busySaving}
+        enterFrom="-top-8"
+        enterTo="top-4"
+        leaveFrom="top-4"
+        leaveTo="-top-8"
+      >
+        <Loader />
+      </Transition>
     </div>
   )
 }
